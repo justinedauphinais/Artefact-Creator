@@ -45,6 +45,6 @@ def remove_artifacts(input_video_path, output_video_path):
     print(f"Artifact removal complete. Processed video saved to {output_video_path}")
 
 if __name__ == "__main__":
-    input_video = "artefact_video.mp4"    # Replace with your input video file path
+    input_video = "artifact_video.mp4"    # Replace with your input video file path
     output_video = "output_video.mp4"  # Replace with your desired output video file path
     remove_artifacts(input_video, output_video)
