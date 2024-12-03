@@ -93,7 +93,7 @@ def simulate_frame_dropping(frame, out, drop_rate):
         out.write(frame)
 
 
-def add_artifacts(input_video_path, noise_level=80, compression_quality=10, kernel_size=15, color_branding_levels=8, salt_and_pepper_amount=0.01, lens_k1=-0.5, lens_k2=0.0, chromatic_aberration_shift=2, dust_particles=10, drop_rate=0.1):
+def add_artifacts(input_video_path, noise_level=80, compression_quality=1, kernel_size=15, color_branding_levels=8, salt_and_pepper_amount=0.01, lens_k1=-0.5, lens_k2=0.0, chromatic_aberration_shift=2, dust_particles=10, drop_rate=0.1):
     cap = cv2.VideoCapture(input_video_path)
 
     if not cap.isOpened():
@@ -120,39 +120,72 @@ def add_artifacts(input_video_path, noise_level=80, compression_quality=10, kern
     print(f"Processing {frame_count} frames to add artifacts...")
 
     frame_number = 0
+    saved_images = False  # Flag to save the first frame with artifacts
+
     while True:
         ret, frame = cap.read()
         if not ret:
             break
 
         # Add Gaussian noise
-        out_gaussian_noise.write(gaussian_noise(frame, noise_level))
+        noisy_frame = gaussian_noise(frame, noise_level)
+        out_gaussian_noise.write(noisy_frame)
+        if not saved_images:
+            cv2.imwrite("gaussian_noise.png", noisy_frame)
 
         # Add compression artifacts
-        out_compression.write(compression_artifacts(frame, compression_quality))
+        compressed_frame = compression_artifacts(frame, compression_quality)
+        out_compression.write(compressed_frame)
+        if not saved_images:
+            cv2.imwrite("compression.png", compressed_frame)
 
         # Add motion blur
-        out_motion_blur.write(motion_blur(frame, kernel_size))
+        blurred_frame = motion_blur(frame, kernel_size)
+        out_motion_blur.write(blurred_frame)
+        if not saved_images:
+            cv2.imwrite("motion_blur.png", blurred_frame)
 
         # Add color branding
-        out_color_banding.write(color_banding(frame, color_branding_levels))
+        banded_frame = color_banding(frame, color_branding_levels)
+        out_color_banding.write(banded_frame)
+        if not saved_images:
+            cv2.imwrite("color_banding.png", banded_frame)
 
         # Add salt and pepper noise
-        out_salt_pepper_noise.write(salt_and_pepper_noise(frame, salt_and_pepper_amount))
+        sp_noise_frame = salt_and_pepper_noise(frame, salt_and_pepper_amount)
+        out_salt_pepper_noise.write(sp_noise_frame)
+        if not saved_images:
+            cv2.imwrite("salt_pepper_noise.png", sp_noise_frame)
 
         # Add lens distortion
-        out_lens_distortion.write(lens_distortion(frame, lens_k1, lens_k2))
+        distorted_frame = lens_distortion(frame, lens_k1, lens_k2)
+        out_lens_distortion.write(distorted_frame)
+        if not saved_images:
+            cv2.imwrite("lens_distortion.png", distorted_frame)
 
         # Add vignetting
-        out_vignetting.write(vignetting(frame))
+        vignette_frame = vignetting(frame)
+        out_vignetting.write(vignette_frame)
+        if not saved_images:
+            cv2.imwrite("vignetting.png", vignette_frame)
 
         # Add chromatic aberration
-        out_chromatic_aberration.write(chromatic_aberration(frame, chromatic_aberration_shift))
+        aberrated_frame = chromatic_aberration(frame, chromatic_aberration_shift)
+        out_chromatic_aberration.write(aberrated_frame)
+        if not saved_images:
+            cv2.imwrite("chromatic_aberration.png", aberrated_frame)
 
         # Add dust particles
-        out_dust_particles.write(dust_dirt_particles(frame, dust_particles))
+        dusty_frame = dust_dirt_particles(frame, dust_particles)
+        out_dust_particles.write(dusty_frame)
+        if not saved_images:
+            cv2.imwrite("dust_particles.png", dusty_frame)
 
+        # Simulate frame dropping
         simulate_frame_dropping(frame, out_frame_dropping, drop_rate)
+
+        if not saved_images:
+            saved_images = True  # Ensure images are saved only for the first frame
 
         frame_number += 1
         if frame_number % 10 == 0:
