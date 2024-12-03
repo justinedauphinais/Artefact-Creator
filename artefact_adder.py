@@ -18,18 +18,15 @@ def compression_artifacts(frame, compression_quality):
 
 
 def motion_blur(frame, kernel_size):
-    # Create a horizontal motion blur kernel
     kernel = np.zeros((kernel_size, kernel_size))
     kernel[int((kernel_size - 1)/2), :] = np.ones(kernel_size)
     kernel = kernel / kernel_size
 
-    # Apply the kernel to the frame
     blurred_frame = cv2.filter2D(frame, -1, kernel)
     return blurred_frame
 
 
 def color_banding(frame, levels):
-    # Reduce the number of color levels
     quantized_frame = (frame // (256 // levels)) * (256 // levels)
     return quantized_frame
 
@@ -39,11 +36,9 @@ def salt_and_pepper_noise(frame, amount):
     num_salt = np.ceil(amount * frame.size * 0.5)
     num_pepper = np.ceil(amount * frame.size * 0.5)
     
-    # Add salt (white pixels)
     coords = [np.random.randint(0, i - 1, int(num_salt)) for i in frame.shape]
     noisy_frame[coords[0], coords[1], :] = 255
 
-    # Add pepper (black pixels)
     coords = [np.random.randint(0, i - 1, int(num_pepper)) for i in frame.shape]
     noisy_frame[coords[0], coords[1], :] = 0
     
@@ -52,28 +47,21 @@ def salt_and_pepper_noise(frame, amount):
 
 def lens_distortion(frame, k1, k2):
     h, w = frame.shape[:2]
-    # Camera matrix
     K = np.array([[w, 0, w/2],
                   [0, w, h/2],
                   [0, 0, 1]], dtype=np.float32)
-    # Distortion coefficients
     D = np.array([k1, k2, 0, 0], dtype=np.float32)
-    # New camera matrix
     new_K, _ = cv2.getOptimalNewCameraMatrix(K, D, (w, h), 0)
-    # Apply distortion
     distorted_frame = cv2.undistort(frame, K, D, None, new_K)
     return distorted_frame
 
 
 def vignetting(frame):
     h, w = frame.shape[:2]
-    # Create coordinate grids
     X_resultant_kernel = cv2.getGaussianKernel(w, w/2)
     Y_resultant_kernel = cv2.getGaussianKernel(h, h/2)
-    # Create vignette mask using outer product
     kernel = Y_resultant_kernel * X_resultant_kernel.T
     mask = kernel / kernel.max()
-    # Apply the mask to each channel
     vignette_frame = np.empty_like(frame)
     for i in range(3):
         vignette_frame[:, :, i] = frame[:, :, i] * mask
@@ -82,9 +70,7 @@ def vignetting(frame):
 
 def chromatic_aberration(frame, shift):
     b, g, r = cv2.split(frame)
-    # Shift blue channel to the left
     b = np.roll(b, shift, axis=1)
-    # Shift red channel to the right
     r = np.roll(r, -shift, axis=1)
     aberrated_frame = cv2.merge([b, g, r])
     return aberrated_frame
@@ -97,29 +83,26 @@ def dust_dirt_particles(frame, num_particles):
         x = np.random.randint(0, w)
         y = np.random.randint(0, h)
         radius = np.random.randint(5, 15)
-        color = (np.random.randint(50, 100),) * 3  # Dark gray color
+        color = (np.random.randint(50, 100),) * 3
         cv2.circle(dusty_frame, (x, y), radius, color, -1)
     return dusty_frame
 
 
 def simulate_frame_dropping(frame, out, drop_rate):
-    # Decide whether to drop the frame
     if np.random.rand() > drop_rate:
         out.write(frame)
 
 
 def add_artifacts(input_video_path, noise_level=80, compression_quality=10, kernel_size=15, color_branding_levels=8, salt_and_pepper_amount=0.01, lens_k1=-0.5, lens_k2=0.0, chromatic_aberration_shift=2, dust_particles=10, drop_rate=0.1):
-    # Open the video file
     cap = cv2.VideoCapture(input_video_path)
 
     if not cap.isOpened():
         print(f"Error opening video file: {input_video_path}")
         return
 
-    # Get video properties
-    width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))   # Width of the frames
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # Height of the frames
-    fps    = cap.get(cv2.CAP_PROP_FPS)                # Frames per second
+    width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))   # Width
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # Height
+    fps    = cap.get(cv2.CAP_PROP_FPS)                # FPS
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v') 
     out_gaussian_noise = cv2.VideoWriter('gaussian_noise.mp4', fourcc, fps, (width, height))
@@ -136,7 +119,6 @@ def add_artifacts(input_video_path, noise_level=80, compression_quality=10, kern
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     print(f"Processing {frame_count} frames to add artifacts...")
 
-    # Read and process frames
     frame_number = 0
     while True:
         ret, frame = cap.read()
@@ -176,7 +158,6 @@ def add_artifacts(input_video_path, noise_level=80, compression_quality=10, kern
         if frame_number % 10 == 0:
             print(f"Processed {frame_number}/{frame_count} frames")
 
-    # Release everything if job is finished
     cap.release()
     out_gaussian_noise.release()
     out_compression.release()
@@ -191,5 +172,5 @@ def add_artifacts(input_video_path, noise_level=80, compression_quality=10, kern
     print(f"Artifact addition complete")
 
 if __name__ == "__main__":
-    input_video = "input_video.mp4"    # Replace with your input video file path
+    input_video = "input_video.mp4"
     add_artifacts(input_video)
